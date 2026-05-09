@@ -17,16 +17,24 @@
         <p class="text-slate-400">Cognitive DeFi Thesis Generator powered by Jupiter AI Stack</p>
     </header>
 
-    <main class="w-full max-auto max-w-2xl glass rounded-3xl p-8 shadow-2xl">
+    <main class="w-full max-auto max-w-3xl glass rounded-3xl p-8 shadow-2xl">
         <div class="mb-8">
-            <label class="block text-sm font-medium text-slate-400 mb-2">Solana Token Address</label>
+            <label class="block text-sm font-medium text-slate-400 mb-2">Target Solana Asset</label>
             <div class="flex gap-2">
-                <input type="text" id="tokenAddress" placeholder="Paste mint address..." class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-sky-500">
-                <button onclick="generateThesis()" class="bg-sky-500 hover:bg-sky-400 px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-sky-500/20">Generate</button>
+                <input type="text" id="tokenAddress" placeholder="Paste address (e.g. JUP...)" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-lime-500 font-mono text-sm">
+                <button onclick="runAgentWorkflow()" id="btnGen" class="bg-lime-500 hover:bg-lime-400 text-black px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-lime-500/20 flex items-center gap-2">
+                    <span>Invoke Agent</span>
+                </button>
             </div>
         </div>
 
-        <div id="results" class="hidden space-y-6">
+        <!-- AGENT TERMINAL -->
+        <div id="terminal" class="hidden mb-8 bg-black/80 rounded-xl p-6 font-mono text-xs text-lime-400 border border-lime-900/50 min-h-[160px] max-h-[200px] overflow-y-auto">
+            <div id="terminalContent"></div>
+            <div id="cursor" class="inline-block w-2 h-4 bg-lime-500 animate-pulse ml-1"></div>
+        </div>
+
+        <div id="results" class="hidden space-y-6 animate-in fade-in duration-700">
             <div class="flex justify-between items-center border-b border-slate-700 pb-4">
                 <div>
                     <h2 id="tokenName" class="text-2xl font-bold">Token Name</h2>
@@ -66,13 +74,57 @@
     </footer>
 
     <script>
-        // Frontend logic for JupiterMind...
-        async function generateThesis() {
+        const logs = [
+            "> Initializing SteelRoc Autonomous Agent...",
+            "> Loading Jupiter AI Stack context (llms-full.txt)...",
+            "> Synchronizing with Jupiter Price API V3...",
+            "> Fetching real-world sentiment from Prediction Markets...",
+            "> Analyzing Perps leverage and liquidation clusters...",
+            "> Cross-referencing Swap V2 routes for liquidity depth...",
+            "> Agent decision: Finalizing investment thesis..."
+        ];
+
+        async function runAgentWorkflow() {
             const addr = document.getElementById('tokenAddress').value;
             if(!addr) return;
+            
+            const btn = document.getElementById('btnGen');
+            btn.disabled = true;
+            btn.innerText = "Agent Working...";
+            
+            document.getElementById('terminal').classList.remove('hidden');
+            const term = document.getElementById('terminalContent');
+            term.innerHTML = '';
+            
+            for(let log of logs) {
+                const p = document.createElement('p');
+                p.className = "mb-1";
+                p.innerText = log;
+                term.appendChild(p);
+                term.scrollTop = term.scrollHeight;
+                await new Promise(r => setTimeout(r, 600));
+            }
+            
+            // Call API
+            try {
+                const res = await fetch(`/api/analyze?mint=${addr}`);
+                const data = await res.json();
+                displayResults(data, addr);
+            } catch(e) {
+                term.innerHTML += `<p class="text-red-500">> API Error: ${e.message}</p>`;
+            }
+        }
+
+        function displayResults(data, addr) {
             document.getElementById('results').classList.remove('hidden');
-            // Simplified UI simulation for agent use
-            document.getElementById('thesisText').innerText = "Simulating Jupiter AI Stack analysis for " + addr.substring(0,6) + "...";
+            document.getElementById('tokenPrice').innerText = data.price ? `$${data.price.usdPrice.toFixed(4)}` : "N/A";
+            document.getElementById('priceChange').innerText = data.price ? `${data.price.priceChange24h.toFixed(2)}%` : "0%";
+            document.getElementById('priceChange').className = data.price?.priceChange24h >= 0 ? "text-lime-400 text-sm" : "text-red-400 text-sm";
+            document.getElementById('tokenName').innerText = data.token ? data.token.name : "Unknown Token";
+            document.getElementById('tokenSymbol').innerText = data.token ? data.token.symbol : addr.substring(0,6);
+            
+            document.getElementById('btnGen').disabled = false;
+            document.getElementById('btnGen').innerText = "Invoke Agent";
         }
     </script>
 </body>
