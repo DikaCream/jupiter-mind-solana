@@ -9,29 +9,48 @@ module.exports = async (req, res) => {
     if (!mint) return res.status(400).json({ error: "Mint address required" });
 
     try {
-        // FETCH 1: Try multiple metadata sources for "detect all"
+        // 1. Fetch Metadata from Jupiter's most comprehensive list
         const tokenRes = await axios.get(`https://tokens.jup.ag/token/${mint}`).catch(() => null);
         
-        // FETCH 2: Try Price V3 first, then V2 for unverified tokens
+        // 2. Fetch Price with Double Fallback (V3 -> V2)
         let priceData = null;
-        const priceV3 = await axios.get(`https://api.jup.ag/price/v3?ids=${mint}`, { headers: HEADERS }).catch(() => null);
-        
-        if (priceV3 && priceV3.data.data[mint]) {
-            priceData = priceV3.data.data[mint];
-        } else {
-            // Fallback to V2 for unverified/all tokens
-            const priceV2 = await axios.get(`https://api.jup.ag/price/v2?ids=${mint}`, { headers: HEADERS }).catch(() => null);
-            if (priceV2 && priceV2.data.data[mint]) {
-                priceData = priceV2.data.data[mint];
+        let priceSource = "None";
+
+        try {
+            const pV3 = await axios.get(`https://api.jup.ag/price/v3?ids=${mint}`, { headers: HEADERS, timeout: 2000 });
+            if (pV3.data.data[mint]) {
+                priceData = pV3.data.data[mint];
+                priceSource = "Jupiter V3 (Verified)";
             }
+        } catch(e) {}
+
+        if (!priceData) {
+            try {
+                const pV2 = await axios.get(`https://api.jup.ag/price/v2?ids=${mint}`, { headers: HEADERS, timeout: 2000 });
+                if (pV2.data.data[mint]) {
+                    priceData = pV2.data.data[mint];
+                    priceSource = "Jupiter V2 (All Tokens)";
+                }
+            } catch(e) {}
         }
 
-        res.status(200).json({
+        // Final JSON response (Never return HTML)
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(200).json({
             price: priceData,
-            token: tokenRes ? tokenRes.data : null,
-            source: priceData ? "Jupiter Index" : "Direct On-chain fallback"
+            token: tokenRes ? tokenRes.data : { name: "Unknown Solana Token", symbol: "SOL-MINT" },
+            meta: {
+                detected: !!(tokenRes || priceData),
+                source: priceSource,
+                mint: mint
+            }
         });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(200).json({ 
+            error: true, 
+            message: err.message,
+            token: { name: "Detecting...", symbol: "MINT" }
+        });
     }
 };
