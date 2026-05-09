@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JupiterMind | Cognitive DeFi Thesis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .jup-gradient { background: linear-gradient(90deg, #c7f284 0%, #00beea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-6">
+    <header class="mb-12 text-center">
+        <h1 class="text-5xl font-black mb-2 jup-gradient">JupiterMind</h1>
+        <p class="text-slate-400">Cognitive DeFi Thesis Generator powered by Jupiter AI Stack</p>
+    </header>
+
+    <main class="w-full max-auto max-w-2xl glass rounded-3xl p-8 shadow-2xl">
+        <div class="mb-8">
+            <label class="block text-sm font-medium text-slate-400 mb-2">Solana Token Address</label>
+            <div class="flex gap-2">
+                <input type="text" id="tokenAddress" placeholder="Paste mint address..." class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                <button onclick="generateThesis()" class="bg-sky-500 hover:bg-sky-400 px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-sky-500/20">Generate</button>
+            </div>
+        </div>
+
+        <div id="results" class="hidden space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-4">
+                <div>
+                    <h2 id="tokenName" class="text-2xl font-bold">Token Name</h2>
+                    <p id="tokenSymbol" class="text-sky-400 text-sm">SYMBOL</p>
+                </div>
+                <div class="text-right">
+                    <p id="tokenPrice" class="text-2xl font-mono">$0.00</p>
+                    <p id="priceChange" class="text-sm">+0.00%</p>
+                </div>
+            </div>
+
+            <div class="p-4 bg-slate-900/50 rounded-xl">
+                <h3 class="text-xs uppercase tracking-widest text-slate-500 font-bold mb-2">Thesis Verdict</h3>
+                <div id="verdict" class="text-lg font-bold">NEUTRAL</div>
+            </div>
+
+            <div class="prose prose-invert max-w-none">
+                <h3 class="text-xs uppercase tracking-widest text-slate-500 font-bold mb-2">Market Thesis</h3>
+                <p id="thesisText" class="text-slate-300 leading-relaxed italic">Analyzing on-chain signals...</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 pt-4">
+                <button class="bg-slate-800 hover:bg-slate-700 p-4 rounded-xl text-center border border-slate-700 transition-all">
+                    <span class="block text-xs text-slate-500 uppercase font-black">Strategy</span>
+                    <span id="strategy">DCA</span>
+                </button>
+                <button class="bg-slate-800 hover:bg-slate-700 p-4 rounded-xl text-center border border-slate-700 transition-all">
+                    <span class="block text-xs text-slate-500 uppercase font-black">Risk</span>
+                    <span id="risk">MEDIUM</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="mt-12 text-slate-500 text-sm">
+        Built for Jupiter "Not Your Regular Bounty" | DX Report Attached
+    </footer>
+
+    <script>
+        // Frontend logic for JupiterMind...
+        async function generateThesis() {
+            const addr = document.getElementById('tokenAddress').value;
+            if(!addr) return;
+            document.getElementById('results').classList.remove('hidden');
+            // Simplified UI simulation for agent use
+            document.getElementById('thesisText').innerText = "Simulating Jupiter AI Stack analysis for " + addr.substring(0,6) + "...";
+        }
+    </script>
+</body>
+</html>
