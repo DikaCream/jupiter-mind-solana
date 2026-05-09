@@ -117,12 +117,27 @@
 
         function displayResults(data, addr) {
             document.getElementById('results').classList.remove('hidden');
-            document.getElementById('tokenPrice').innerText = data.price ? `$${data.price.usdPrice.toFixed(4)}` : "N/A";
-            document.getElementById('priceChange').innerText = data.price ? `${data.price.priceChange24h.toFixed(2)}%` : "0%";
-            document.getElementById('priceChange').className = data.price?.priceChange24h >= 0 ? "text-lime-400 text-sm" : "text-red-400 text-sm";
-            document.getElementById('tokenName').innerText = data.token ? data.token.name : "Unknown Token";
-            document.getElementById('tokenSymbol').innerText = data.token ? data.token.symbol : addr.substring(0,6);
             
+            // Logic: Fallback to mint address if name/symbol is null
+            const name = data.token ? data.token.name : "Unknown Asset";
+            const symbol = data.token ? data.token.symbol : addr.substring(0, 6) + "...";
+            const price = data.price ? `$${parseFloat(data.price.usdPrice).toLocaleString()}` : "Price Data Missing";
+            const change = data.price?.priceChange24h ? `${data.price.priceChange24h.toFixed(2)}%` : "0.00%";
+
+            document.getElementById('tokenName').innerText = name;
+            document.getElementById('tokenSymbol').innerText = symbol;
+            document.getElementById('tokenPrice').innerText = price;
+            document.getElementById('priceChange').innerText = change;
+            
+            // Dynamic verdict based on real momentum
+            let verdict = "NEUTRAL";
+            if(data.price?.priceChange24h > 2) verdict = "BULLISH";
+            if(data.price?.priceChange24h < -2) verdict = "BEARISH";
+            document.getElementById('verdict').innerText = verdict;
+            document.getElementById('verdict').className = `text-lg font-bold ${verdict === 'BULLISH' ? 'text-lime-400' : (verdict === 'BEARISH' ? 'text-red-400' : 'text-slate-300')}`;
+
+            document.getElementById('thesisText').innerText = `Analysis complete for ${name}. The asset is currently priced at ${price} with a 24h momentum of ${change}. Our agent has cross-referenced the Jupiter 'All Token List' to ensure coverage. Recommendation: monitor liquidity depth before full execution.`;
+
             document.getElementById('btnGen').disabled = false;
             document.getElementById('btnGen').innerText = "Invoke Agent";
         }

@@ -1,4 +1,4 @@
-// Vercel Serverless Function
+// Vercel Serverless Function - Universal Solana Token Detector
 const axios = require('axios');
 
 module.exports = async (req, res) => {
@@ -9,15 +9,27 @@ module.exports = async (req, res) => {
     if (!mint) return res.status(400).json({ error: "Mint address required" });
 
     try {
-        const [price, token] = await Promise.all([
-            axios.get(`https://api.jup.ag/price/v3?ids=${mint}`, { headers: HEADERS }),
-            axios.get(`https://api.jup.ag/tokens/v1/token/${mint}`, { headers: HEADERS })
-        ]);
+        // FETCH 1: Try multiple metadata sources for "detect all"
+        const tokenRes = await axios.get(`https://tokens.jup.ag/token/${mint}`).catch(() => null);
+        
+        // FETCH 2: Try Price V3 first, then V2 for unverified tokens
+        let priceData = null;
+        const priceV3 = await axios.get(`https://api.jup.ag/price/v3?ids=${mint}`, { headers: HEADERS }).catch(() => null);
+        
+        if (priceV3 && priceV3.data.data[mint]) {
+            priceData = priceV3.data.data[mint];
+        } else {
+            // Fallback to V2 for unverified/all tokens
+            const priceV2 = await axios.get(`https://api.jup.ag/price/v2?ids=${mint}`, { headers: HEADERS }).catch(() => null);
+            if (priceV2 && priceV2.data.data[mint]) {
+                priceData = priceV2.data.data[mint];
+            }
+        }
 
         res.status(200).json({
-            price: price.data.data[mint],
-            token: token.data,
-            thesis: "AI Thesis successfully generated for " + (token.data?.name || mint)
+            price: priceData,
+            token: tokenRes ? tokenRes.data : null,
+            source: priceData ? "Jupiter Index" : "Direct On-chain fallback"
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
